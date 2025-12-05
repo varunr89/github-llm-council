@@ -33,6 +33,11 @@
           "type": "array",
           "default": ["gpt-5.1", "sonnet-4.5", "gemini-pro-3"],
           "description": "Preferred model ids for council; first available three are used."
+        },
+        "llmCouncil.historySize": {
+          "type": "number",
+          "default": 20,
+          "description": "Maximum number of run summaries to keep."
         }
       }
     }
