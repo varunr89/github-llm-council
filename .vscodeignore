@@ -8,3 +8,4 @@
 **/*.ts
 **/vitest.config.*
 **/tsconfig.*
+**/CHANGELOG.md
