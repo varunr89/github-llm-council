@@ -1,0 +1,49 @@
+{
+  "name": "llm-council",
+  "displayName": "LLM Council",
+  "description": "VS Code extension for running an LLM council via the LM API",
+  "version": "0.0.1",
+  "publisher": "your-name-here",
+  "engines": {
+    "vscode": "^1.84.0"
+  },
+  "activationEvents": [
+    "onCommand:llmCouncil.run"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "llmCouncil.run",
+        "title": "LLM Council"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "llmCouncil.run",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "test": "npm run compile && npm run test:integration",
+    "test:integration": "node ./out/test/runTest.js",
+    "lint": "eslint src --ext .ts"
+  },
+  "devDependencies": {
+    "@types/glob": "^7.2.0",
+    "@types/mocha": "^10.0.0",
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.84.0",
+    "@vscode/test-electron": "^2.4.0",
+    "eslint": "^8.0.0",
+    "glob": "^7.2.3",
+    "mocha": "^10.0.0",
+    "typescript": "^5.0.0"
+  }
+}
