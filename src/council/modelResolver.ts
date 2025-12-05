@@ -18,3 +18,10 @@ export function pickDefaultModels(desired: string[], available: ChatModelInfo[],
 
   return [...desiredHits, ...remaining].slice(0, max);
 }
+
+export function mapAvailableModels(models: readonly any[]): ChatModelInfo[] {
+  return models.map(m => ({
+    id: m.id ?? '',
+    quality: (m.capabilities && (m.capabilities.quality as number | undefined)) ?? 0
+  }));
+}

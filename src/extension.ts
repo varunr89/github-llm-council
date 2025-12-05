@@ -1,9 +1,8 @@
 import * as vscode from 'vscode';
+import { runCommand } from './council/runCommand';
 
 export function activate(context: vscode.ExtensionContext) {
-  const disposable = vscode.commands.registerCommand('llmCouncil.run', () => {
-    vscode.window.showInformationMessage('LLM Council placeholder');
-  });
+  const disposable = vscode.commands.registerCommand('llmCouncil.run', () => runCommand(context));
 
   context.subscriptions.push(disposable);
 }
