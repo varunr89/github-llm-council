@@ -9,3 +9,4 @@
 **/vitest.config.*
 **/tsconfig.*
 **/CHANGELOG.md
+**/.vscode
