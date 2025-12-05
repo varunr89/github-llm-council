@@ -25,13 +25,24 @@
           "group": "navigation"
         }
       ]
+    },
+    "configuration": {
+      "title": "LLM Council",
+      "properties": {
+        "llmCouncil.defaultModels": {
+          "type": "array",
+          "default": ["gpt-5.1", "sonnet-4.5", "gemini-pro-3"],
+          "description": "Preferred model ids for council; first available three are used."
+        }
+      }
     }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
-    "test": "npm run compile && npm run test:integration",
+    "test": "npm run compile && npm run test:unit && npm run test:integration",
+    "test:unit": "vitest run",
     "test:integration": "node ./out/test/runTest.js",
     "lint": "eslint src --ext .ts"
   },
@@ -44,6 +55,8 @@
     "eslint": "^8.0.0",
     "glob": "^7.2.3",
     "mocha": "^10.0.0",
-    "typescript": "^5.0.0"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.0.0",
+    "vitest": "^1.6.1"
   }
 }

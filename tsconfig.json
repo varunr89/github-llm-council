@@ -12,5 +12,6 @@
     "moduleResolution": "node",
     "types": ["node", "mocha", "vscode"]
   },
-  "exclude": ["node_modules", ".vscode-test"]
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", ".vscode-test", "out", "vitest.config.ts"]
 }
