@@ -4,7 +4,7 @@ const templates: PromptTemplate[] = [
   {
     id: 'explain',
     title: 'Explain code',
-    body: 'Explain what this code does and its key behaviors.'
+    body: 'Explain what this code does, its key behaviors, and highlight concerns a reviewer should know..'
   },
   {
     id: 'debug',
@@ -12,14 +12,9 @@ const templates: PromptTemplate[] = [
     body: 'Identify bugs or risky behavior. Point to exact lines and suggest concrete fixes.'
   },
   {
-    id: 'review',
-    title: 'Review code',
-    body: 'Review this code for correctness, safety, performance, and readability. List findings with file/line and fixes.'
-  },
-  {
-    id: 'summarize',
-    title: 'Summarize',
-    body: 'Summarize this code and highlight concerns a reviewer should know.'
+    id: 'Answer',
+    title: 'Answer Question',
+    body: 'Answer the question ensuring factual accuracy. Think step by step for complex questions. Clearly state your assumptions.'
   }
 ];
 
