@@ -6,7 +6,12 @@ async function main() {
     const extensionDevelopmentPath = path.resolve(__dirname, '../../');
     const extensionTestsPath = path.resolve(__dirname, './suite/index');
 
-    await runTests({ extensionDevelopmentPath, extensionTestsPath });
+    await runTests({
+      version: process.env.VSCODE_TEST_VERSION ?? '1.106.3',
+      extensionDevelopmentPath,
+      extensionTestsPath,
+      launchArgs: ['--disable-gpu', '--disable-sandbox', '--disable-dev-shm-usage']
+    });
   } catch (err) {
     console.error('Failed to run tests');
     if (err instanceof Error) {

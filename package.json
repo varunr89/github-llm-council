@@ -48,8 +48,8 @@
     "watch": "tsc -watch -p ./",
     "test": "npm run compile && npm run test:unit && npm run test:integration",
     "test:unit": "vitest run",
-    "test:integration": "node ./out/test/runTest.js",
-    "lint": "eslint src --ext .ts"
+    "test:integration": "vitest run src/test/unit/markdownArtifact.integration.test.ts",
+    "lint": "tsc -p ./ --noEmit"
   },
   "devDependencies": {
     "@types/glob": "^7.2.0",
