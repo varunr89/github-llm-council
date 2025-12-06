@@ -25,3 +25,6 @@ const templates: PromptTemplate[] = [
 
 export default templates;
 export type { PromptTemplate };
+
+export const slugPrompt =
+  'Generate a 3-6 word, lowercase, hyphen-separated slug for this council run. Respond with only the slug text.';

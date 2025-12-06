@@ -1,10 +1,13 @@
 import * as vscode from 'vscode';
 import { pickDefaultModels, mapAvailableModels } from './modelResolver';
 import { chooseContext } from './contextResolver';
-import { runCouncil } from './pipeline';
+import { runCouncil, LmClient } from './pipeline';
 import prompts from '../prompts';
 import { OutputLogger } from './outputChannel';
 import { HistoryStore } from './historyStore';
+import { generateSlugFromLLM } from './slugger';
+import { buildMarkdownArtifact } from './markdownBuilder';
+import { writeMarkdownFile } from './fileWriter';
 
 type ModelPickItem = vscode.QuickPickItem & { id: string };
 
@@ -62,6 +65,7 @@ export async function runCommand(ctx: vscode.ExtensionContext) {
     return;
   }
   const chair = models[0];
+  const runId = Date.now().toString();
 
   const logger = new OutputLogger('LLM Council');
   logger.info(`Starting LLM Council`);
@@ -81,6 +85,73 @@ export async function runCommand(ctx: vscode.ExtensionContext) {
     vscode.workspace.getConfiguration('llmCouncil').get('historySize', 20)
   );
 
+  const lmClient: LmClient = {
+    async chat(model, messages, onToken) {
+      const chatModel = availableModels.find(m => m.id === model);
+      if (!chatModel) {
+        throw new Error(`Model not available: ${model}`);
+      }
+      const resp = await chatModel.sendRequest(messages as any, {}, undefined);
+      let collected = '';
+      const extractText = (chunk: unknown): string => {
+        if (typeof chunk === 'string') return chunk;
+        if (chunk && typeof chunk === 'object') {
+          const maybeText = (chunk as any).text;
+          if (typeof maybeText === 'string') return maybeText;
+          const maybeValue = (chunk as any).value;
+          if (typeof maybeValue === 'string') return maybeValue;
+          const deltaContent = (chunk as any).delta?.content;
+          if (typeof deltaContent === 'string') return deltaContent;
+          if (Array.isArray(deltaContent) && typeof deltaContent[0]?.text === 'string') {
+            return deltaContent[0].text;
+          }
+          if (Array.isArray(deltaContent) && typeof deltaContent[0]?.value === 'string') {
+            return deltaContent[0].value;
+          }
+          const maybeContent = (chunk as any).content;
+          if (typeof maybeContent === 'string') return maybeContent;
+          if (Array.isArray(maybeContent) && typeof maybeContent[0]?.text === 'string') {
+            return maybeContent[0].text;
+          }
+          if (Array.isArray(maybeContent) && typeof maybeContent[0]?.value === 'string') {
+            return maybeContent[0].value;
+          }
+          const messageContent = (chunk as any).message?.content;
+          if (typeof messageContent === 'string') return messageContent;
+          if (Array.isArray(messageContent) && typeof messageContent[0]?.text === 'string') {
+            return messageContent[0].text;
+          }
+          if (Array.isArray(messageContent) && typeof messageContent[0]?.value === 'string') {
+            return messageContent[0].value;
+          }
+        }
+        return '';
+      };
+      for await (const chunk of resp.stream ?? []) {
+        const text = extractText(chunk);
+        if (text) {
+          collected += text;
+          onToken(text);
+        }
+      }
+      const outputText = (resp as any).outputText;
+      if (typeof outputText === 'string' && outputText.length > 0) {
+        return outputText;
+      }
+      if (collected.length > 0) {
+        return collected;
+      }
+      // last resort: stringify first chunk for visibility
+      const first = await (async () => {
+        for await (const chunk of resp.stream ?? []) {
+          return typeof chunk === 'string' ? chunk : JSON.stringify(chunk);
+        }
+        return '';
+      })();
+      return first;
+    }
+  };
+
   try {
     const result = await runCouncil(
       {
@@ -89,69 +160,7 @@ export async function runCommand(ctx: vscode.ExtensionContext) {
         models,
         chair
       },
-      {
-        async chat(model, messages, onToken) {
-          const chatModel = availableModels.find(m => m.id === model);
-          if (!chatModel) {
-            throw new Error(`Model not available: ${model}`);
-          }
-          const resp = await chatModel.sendRequest(messages as any, {}, undefined);
-          let collected = '';
-          const extractText = (chunk: unknown): string => {
-            if (typeof chunk === 'string') return chunk;
-            if (chunk && typeof chunk === 'object') {
-              const maybeText = (chunk as any).text;
-              if (typeof maybeText === 'string') return maybeText;
-              const maybeValue = (chunk as any).value;
-              if (typeof maybeValue === 'string') return maybeValue;
-              const deltaContent = (chunk as any).delta?.content;
-              if (typeof deltaContent === 'string') return deltaContent;
-              if (Array.isArray(deltaContent) && typeof deltaContent[0]?.text === 'string') {
-                return deltaContent[0].text;
-              }
-              const maybeContent = (chunk as any).content;
-              if (typeof maybeContent === 'string') return maybeContent;
-              if (Array.isArray(maybeContent) && typeof maybeContent[0]?.text === 'string') {
-                return maybeContent[0].text;
-              }
-              if (Array.isArray(maybeContent) && typeof maybeContent[0]?.value === 'string') {
-                return maybeContent[0].value;
-              }
-              const messageContent = (chunk as any).message?.content;
-              if (typeof messageContent === 'string') return messageContent;
-              if (Array.isArray(messageContent) && typeof messageContent[0]?.text === 'string') {
-                return messageContent[0].text;
-              }
-              if (Array.isArray(messageContent) && typeof messageContent[0]?.value === 'string') {
-                return messageContent[0].value;
-              }
-            }
-            return '';
-          };
-          for await (const chunk of resp.stream ?? []) {
-            const text = extractText(chunk);
-            if (text) {
-              collected += text;
-              onToken(text);
-            }
-          }
-          const outputText = (resp as any).outputText;
-          if (typeof outputText === 'string' && outputText.length > 0) {
-            return outputText;
-          }
-          if (collected.length > 0) {
-            return collected;
-          }
-          // last resort: stringify first chunk for visibility
-          const first = await (async () => {
-            for await (const chunk of resp.stream ?? []) {
-              return typeof chunk === 'string' ? chunk : JSON.stringify(chunk);
-            }
-            return '';
-          })();
-          return first;
-        }
-      },
+      lmClient,
       {
         onToken(stage, model, chunk) {
           logger.stream(stage, model, chunk);
@@ -176,12 +185,51 @@ export async function runCommand(ctx: vscode.ExtensionContext) {
       logger.error('Final answer was empty');
     }
     await summaryStore.add({
-      id: Date.now().toString(),
+      id: runId,
       prompt,
       models,
       finalAnswer: result.finalAnswer,
       ts: Date.now()
     });
+
+    const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri;
+    if (!workspaceRoot) {
+      logger.error('No workspace folder available; skipping markdown artifact');
+      return;
+    }
+
+    try {
+      const slug = await generateSlugFromLLM({
+        client: lmClient,
+        model: chair,
+        prompt,
+        contextPreview: previewSnippet,
+        log: msg => logger.info(msg)
+      });
+
+      const artifact = buildMarkdownArtifact({
+        slug,
+        prompt,
+        promptPreview: prompt.slice(0, 200),
+        contextPreview: resolvedCtx.kind === 'none' ? undefined : previewSnippet,
+        contextKind: resolvedCtx.kind,
+        models,
+        chairModel: chair,
+        stage1: result.stage1,
+        stage2: result.stage2,
+        finalAnswer: result.finalAnswer,
+        timestamp: new Date(),
+        version: ctx.extension.packageJSON.version ?? '0.0.0',
+        runId
+      });
+
+      const targetUri = await writeMarkdownFile(workspaceRoot, artifact.filenameBase, artifact.content);
+      logger.info(`Markdown saved to ${targetUri.fsPath ?? targetUri.path ?? targetUri.toString()}`);
+      const doc = await vscode.workspace.openTextDocument(targetUri);
+      await vscode.window.showTextDocument(doc, { preview: false });
+    } catch (err) {
+      logger.error('Failed to write markdown artifact', err);
+    }
   } catch (err) {
     logger.error('Council run failed', err);
     throw err;
