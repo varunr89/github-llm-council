@@ -1,5 +1,5 @@
 {
-  "name": "llm-council",
+  "name": "github-llm-council",
   "displayName": "LLM Council",
   "description": "VS Code extension for running an LLM council via the LM API",
   "version": "0.0.1",
@@ -7,6 +7,15 @@
   "engines": {
     "vscode": "^1.84.0"
   },
+  "bin": {
+    "github-llm-council": "bin/install.js"
+  },
+  "files": [
+    "dist/llm-council.vsix",
+    "bin",
+    "LICENSE",
+    "README.md"
+  ],
   "activationEvents": [
     "onCommand:llmCouncil.run"
   ],
@@ -51,8 +60,8 @@
     "test:integration": "vitest run src/test/unit/markdownArtifact.integration.test.ts",
     "lint": "tsc -p ./ --noEmit",
     "package:vsix": "npx vsce package --no-yarn --out dist/llm-council.vsix",
-    "install:local": "node scripts/install-local.js",
-    "postinstall": "node scripts/install-local.js"
+    "prepublishOnly": "npm run compile && npm run package:vsix",
+    "postinstall": "node bin/install.js"
   },
   "devDependencies": {
     "@types/glob": "^7.2.0",
