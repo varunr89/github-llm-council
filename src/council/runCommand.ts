@@ -64,65 +64,82 @@ export async function runCommand(ctx: vscode.ExtensionContext) {
   const chair = models[0];
 
   const logger = new OutputLogger('LLM Council');
+  logger.info(`Starting LLM Council`);
   logger.info(`Models: ${models.join(', ')}`);
+  logger.info(`Context: ${resolvedCtx.kind}`);
 
   const summaryStore = new HistoryStore(
     ctx.globalState,
     vscode.workspace.getConfiguration('llmCouncil').get('historySize', 20)
   );
 
-  const result = await runCouncil(
-    {
-      prompt,
-      contextText: resolvedCtx.kind === 'none' ? undefined : resolvedCtx.text,
-      models,
-      chair
-    },
-    {
-      async chat(model, messages, onToken) {
-        const chatModel = availableModels.find(m => m.id === model);
-        if (!chatModel) {
-          throw new Error(`Model not available: ${model}`);
-        }
-        const resp = await chatModel.sendRequest(messages as any, {}, undefined);
-        let collected = '';
-        const extractText = (chunk: unknown): string => {
-          if (typeof chunk === 'string') return chunk;
-          if (chunk && typeof chunk === 'object') {
-            const maybeText = (chunk as any).text;
-            if (typeof maybeText === 'string') return maybeText;
-            const maybeContent = (chunk as any).content;
-            if (typeof maybeContent === 'string') return maybeContent;
-            if (Array.isArray(maybeContent) && typeof maybeContent[0]?.value === 'string') {
-              return maybeContent[0].value;
+  try {
+    const result = await runCouncil(
+      {
+        prompt,
+        contextText: resolvedCtx.kind === 'none' ? undefined : resolvedCtx.text,
+        models,
+        chair
+      },
+      {
+        async chat(model, messages, onToken) {
+          const chatModel = availableModels.find(m => m.id === model);
+          if (!chatModel) {
+            throw new Error(`Model not available: ${model}`);
+          }
+          const resp = await chatModel.sendRequest(messages as any, {}, undefined);
+          let collected = '';
+          const extractText = (chunk: unknown): string => {
+            if (typeof chunk === 'string') return chunk;
+            if (chunk && typeof chunk === 'object') {
+              const maybeText = (chunk as any).text;
+              if (typeof maybeText === 'string') return maybeText;
+              const deltaContent = (chunk as any).delta?.content;
+              if (typeof deltaContent === 'string') return deltaContent;
+              if (Array.isArray(deltaContent) && typeof deltaContent[0]?.text === 'string') {
+                return deltaContent[0].text;
+              }
+              const maybeContent = (chunk as any).content;
+              if (typeof maybeContent === 'string') return maybeContent;
+              if (Array.isArray(maybeContent) && typeof maybeContent[0]?.text === 'string') {
+                return maybeContent[0].text;
+              }
+              const messageContent = (chunk as any).message?.content;
+              if (typeof messageContent === 'string') return messageContent;
+              if (Array.isArray(messageContent) && typeof messageContent[0]?.text === 'string') {
+                return messageContent[0].text;
+              }
+            }
+            return '';
+          };
+          for await (const chunk of resp.stream ?? []) {
+            const text = extractText(chunk);
+            if (text) {
+              collected += text;
+              onToken(text);
             }
           }
-          return '';
-        };
-        for await (const chunk of resp.stream ?? []) {
-          const text = extractText(chunk);
-          if (text) {
-            collected += text;
-            onToken(text);
-          }
+          const outputText = (resp as any).outputText;
+          return typeof outputText === 'string' && outputText.length > 0 ? outputText : collected;
         }
-        const outputText = (resp as any).outputText;
-        return typeof outputText === 'string' && outputText.length > 0 ? outputText : collected;
+      },
+      {
+        onToken(stage, model, chunk) {
+          logger.stream(stage, model, chunk);
+        }
       }
-    },
-    {
-      onToken(stage, model, chunk) {
-        logger.stream(stage, model, chunk);
-      }
-    }
-  );
+    );
 
-  logger.info(`Final: ${result.finalAnswer}`);
-  await summaryStore.add({
-    id: Date.now().toString(),
-    prompt,
-    models,
-    finalAnswer: result.finalAnswer,
-    ts: Date.now()
-  });
+    logger.info(`Final: ${result.finalAnswer}`);
+    await summaryStore.add({
+      id: Date.now().toString(),
+      prompt,
+      models,
+      finalAnswer: result.finalAnswer,
+      ts: Date.now()
+    });
+  } catch (err) {
+    logger.error('Council run failed', err);
+    throw err;
+  }
 }

@@ -16,4 +16,10 @@ export class OutputLogger {
     if (!chunk) return;
     this.channel.append(`[${stage}:${model}] ${chunk}`);
   }
+
+  error(message: string, err?: unknown) {
+    const details = err instanceof Error ? `${err.message}\n${err.stack ?? ''}` : `${err ?? ''}`;
+    this.channel.appendLine(`[error] ${message}${details ? `: ${details}` : ''}`);
+    this.channel.show(true);
+  }
 }
