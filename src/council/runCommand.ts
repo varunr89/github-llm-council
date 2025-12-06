@@ -67,6 +67,14 @@ export async function runCommand(ctx: vscode.ExtensionContext) {
   logger.info(`Starting LLM Council`);
   logger.info(`Models: ${models.join(', ')}`);
   logger.info(`Context: ${resolvedCtx.kind}`);
+  const preview = resolvedCtx.kind === 'none' ? '' : (resolvedCtx.text ?? '');
+  const previewSnippet = preview.length > 500 ? `${preview.slice(0, 500)}…` : preview;
+  logger.info(`Prompt: ${prompt.slice(0, 200)}${prompt.length > 200 ? '…' : ''}`);
+  if (resolvedCtx.kind !== 'none') {
+    logger.info(`Context length: ${preview.length}, preview:\n${previewSnippet}`);
+  } else {
+    logger.info('Context is none');
+  }
 
   const summaryStore = new HistoryStore(
     ctx.globalState,
