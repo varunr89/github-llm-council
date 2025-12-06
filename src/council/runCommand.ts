@@ -159,7 +159,19 @@ export async function runCommand(ctx: vscode.ExtensionContext) {
       }
     );
 
-    logger.info(`Final: ${result.finalAnswer}`);
+    logger.info('--- Stage 1 answers ---');
+    for (const m of models) {
+      logger.info(`[${m}] ${result.stage1[m] ?? '<empty>'}`);
+    }
+
+    logger.info('--- Stage 2 reviews ---');
+    for (const m of models) {
+      logger.info(`[${m}] ${result.stage2[m] ?? '<empty>'}`);
+    }
+
+    logger.info(`--- Stage 3 final (chair: ${chair}) ---`);
+    logger.info(result.finalAnswer || '<empty>');
+
     if (!result.finalAnswer) {
       logger.error('Final answer was empty');
     }

@@ -14,36 +14,32 @@ export async function runCouncil(input: RunInputs, client: LmClient, sink: Token
     { role: 'user', content: input.prompt + (input.contextText ? `\nContext:\n${input.contextText}` : '') }
   ];
 
-  const stage1Entries = await Promise.all(
-    input.models.map(async m => {
-      let text = '';
-      const resp = await client.chat(m, baseMessages, chunk => {
-        text += chunk;
-        sink.onToken('S1', m, chunk);
-      });
-      return [m, resp ?? text] as const;
-    })
-  );
-  const stage1: Record<string, string> = Object.fromEntries(stage1Entries);
+  const stage1: Record<string, string> = {};
+  for (const m of input.models) {
+    let text = '';
+    const resp = await client.chat(m, baseMessages, chunk => {
+      text += chunk;
+      sink.onToken('S1', m, chunk);
+    });
+    stage1[m] = resp ?? text;
+  }
 
-  const stage2Entries = await Promise.all(
-    input.models.map(async m => {
-      let text = '';
-      const review = await client.chat(
-        m,
-        [
-          { role: 'system', content: 'Review answers and identify the strongest response.' },
-          { role: 'user', content: JSON.stringify(stage1) }
-        ],
-        chunk => {
-          text += chunk;
-          sink.onToken('S2', m, chunk);
-        }
-      );
-      return [m, review ?? text] as const;
-    })
-  );
-  const stage2: Record<string, string> = Object.fromEntries(stage2Entries);
+  const stage2: Record<string, string> = {};
+  for (const m of input.models) {
+    let text = '';
+    const review = await client.chat(
+      m,
+      [
+        { role: 'system', content: 'Review answers and identify the strongest response.' },
+        { role: 'user', content: JSON.stringify(stage1) }
+      ],
+      chunk => {
+        text += chunk;
+        sink.onToken('S2', m, chunk);
+      }
+    );
+    stage2[m] = review ?? text;
+  }
 
   let finalText = '';
   const finalAnswer = await client.chat(
