@@ -14,12 +14,6 @@
   "bin": {
     "github-llm-council": "bin/install.js"
   },
-  "files": [
-    "dist/llm-council.vsix",
-    "bin",
-    "LICENSE",
-    "README.md"
-  ],
   "activationEvents": [
     "onCommand:llmCouncil.run"
   ],

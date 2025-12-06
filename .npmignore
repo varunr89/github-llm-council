@@ -1,0 +1,9 @@
+# Exclude everything by default
+*
+
+# Keep the packaged VSIX and installer
+!dist/llm-council.vsix
+!bin/**
+!package.json
+!README.md
+!LICENSE
