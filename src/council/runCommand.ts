@@ -94,6 +94,8 @@ export async function runCommand(ctx: vscode.ExtensionContext) {
             if (chunk && typeof chunk === 'object') {
               const maybeText = (chunk as any).text;
               if (typeof maybeText === 'string') return maybeText;
+              const maybeValue = (chunk as any).value;
+              if (typeof maybeValue === 'string') return maybeValue;
               const deltaContent = (chunk as any).delta?.content;
               if (typeof deltaContent === 'string') return deltaContent;
               if (Array.isArray(deltaContent) && typeof deltaContent[0]?.text === 'string') {
@@ -104,10 +106,16 @@ export async function runCommand(ctx: vscode.ExtensionContext) {
               if (Array.isArray(maybeContent) && typeof maybeContent[0]?.text === 'string') {
                 return maybeContent[0].text;
               }
+              if (Array.isArray(maybeContent) && typeof maybeContent[0]?.value === 'string') {
+                return maybeContent[0].value;
+              }
               const messageContent = (chunk as any).message?.content;
               if (typeof messageContent === 'string') return messageContent;
               if (Array.isArray(messageContent) && typeof messageContent[0]?.text === 'string') {
                 return messageContent[0].text;
+              }
+              if (Array.isArray(messageContent) && typeof messageContent[0]?.value === 'string') {
+                return messageContent[0].value;
               }
             }
             return '';
@@ -120,7 +128,20 @@ export async function runCommand(ctx: vscode.ExtensionContext) {
             }
           }
           const outputText = (resp as any).outputText;
-          return typeof outputText === 'string' && outputText.length > 0 ? outputText : collected;
+          if (typeof outputText === 'string' && outputText.length > 0) {
+            return outputText;
+          }
+          if (collected.length > 0) {
+            return collected;
+          }
+          // last resort: stringify first chunk for visibility
+          const first = await (async () => {
+            for await (const chunk of resp.stream ?? []) {
+              return typeof chunk === 'string' ? chunk : JSON.stringify(chunk);
+            }
+            return '';
+          })();
+          return first;
         }
       },
       {
@@ -131,6 +152,9 @@ export async function runCommand(ctx: vscode.ExtensionContext) {
     );
 
     logger.info(`Final: ${result.finalAnswer}`);
+    if (!result.finalAnswer) {
+      logger.error('Final answer was empty');
+    }
     await summaryStore.add({
       id: Date.now().toString(),
       prompt,
