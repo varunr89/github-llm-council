@@ -85,13 +85,29 @@ export async function runCommand(ctx: vscode.ExtensionContext) {
           throw new Error(`Model not available: ${model}`);
         }
         const resp = await chatModel.sendRequest(messages as any, {}, undefined);
+        let collected = '';
+        const extractText = (chunk: unknown): string => {
+          if (typeof chunk === 'string') return chunk;
+          if (chunk && typeof chunk === 'object') {
+            const maybeText = (chunk as any).text;
+            if (typeof maybeText === 'string') return maybeText;
+            const maybeContent = (chunk as any).content;
+            if (typeof maybeContent === 'string') return maybeContent;
+            if (Array.isArray(maybeContent) && typeof maybeContent[0]?.value === 'string') {
+              return maybeContent[0].value;
+            }
+          }
+          return '';
+        };
         for await (const chunk of resp.stream ?? []) {
-          const text = (chunk as any)?.text ?? (chunk as any) ?? '';
+          const text = extractText(chunk);
           if (text) {
+            collected += text;
             onToken(text);
           }
         }
-        return (resp as any).outputText ?? '';
+        const outputText = (resp as any).outputText;
+        return typeof outputText === 'string' && outputText.length > 0 ? outputText : collected;
       }
     },
     {
