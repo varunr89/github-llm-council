@@ -3,7 +3,11 @@
   "displayName": "LLM Council",
   "description": "VS Code extension for running an LLM council via the LM API",
   "version": "0.0.1",
-  "publisher": "your-name-here",
+  "publisher": "varunr89",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/varunr89/github-llm-council.git"
+  },
   "engines": {
     "vscode": "^1.84.0"
   },
