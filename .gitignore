@@ -4,3 +4,4 @@ out
 *.vsix
 *.log
 .DS_Store
+dist

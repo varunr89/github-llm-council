@@ -49,7 +49,10 @@
     "test": "npm run compile && npm run test:unit && npm run test:integration",
     "test:unit": "vitest run",
     "test:integration": "vitest run src/test/unit/markdownArtifact.integration.test.ts",
-    "lint": "tsc -p ./ --noEmit"
+    "lint": "tsc -p ./ --noEmit",
+    "package:vsix": "npx vsce package --no-yarn --out dist/llm-council.vsix",
+    "install:local": "node scripts/install-local.js",
+    "postinstall": "node scripts/install-local.js"
   },
   "devDependencies": {
     "@types/glob": "^7.2.0",
@@ -62,6 +65,7 @@
     "mocha": "^10.0.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.0.0",
-    "vitest": "^1.6.1"
+    "vitest": "^1.6.1",
+    "@vscode/vsce": "^2.31.0"
   }
 }
