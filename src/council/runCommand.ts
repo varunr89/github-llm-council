@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { pickDefaultModels, mapAvailableModels } from './modelResolver';
+import { mapAvailableModels, resolveInitialModels } from './modelResolver';
 import { chooseContext } from './contextResolver';
 import { runCouncil, LmClient } from './pipeline';
 import prompts from '../prompts';
@@ -10,6 +10,7 @@ import { buildMarkdownArtifact } from './markdownBuilder';
 import { writeMarkdownFile } from './fileWriter';
 
 type ModelPickItem = vscode.QuickPickItem & { id: string };
+const PREFERRED_MODELS_KEY = 'llmCouncil.preferredModels';
 
 export async function runCommand(ctx: vscode.ExtensionContext) {
   const editor = vscode.window.activeTextEditor;
@@ -48,7 +49,12 @@ export async function runCommand(ctx: vscode.ExtensionContext) {
   const availableModels = await vscode.lm.selectChatModels();
   const desired = vscode.workspace.getConfiguration('llmCouncil').get<string[]>('defaultModels', []);
   const mapped = mapAvailableModels(availableModels);
-  const resolvedDefaults = pickDefaultModels(desired, mapped);
+  const storedModels = ctx.workspaceState.get<string[]>(PREFERRED_MODELS_KEY, []);
+  const resolvedDefaults = resolveInitialModels({
+    stored: storedModels,
+    desiredDefault: desired,
+    available: mapped
+  });
 
   const modelQuickPickItems: ModelPickItem[] = availableModels.map(m => ({
     id: m.id,
@@ -64,6 +70,7 @@ export async function runCommand(ctx: vscode.ExtensionContext) {
     void vscode.window.showWarningMessage('No models selected for council run.');
     return;
   }
+  await ctx.workspaceState.update(PREFERRED_MODELS_KEY, models);
   const chair = models[0];
   const runId = Date.now().toString();
 

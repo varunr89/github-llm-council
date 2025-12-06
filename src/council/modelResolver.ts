@@ -1,4 +1,5 @@
 export type ChatModelInfo = { id: string; quality?: number };
+const DEFAULT_MAX = 3;
 
 /**
  * Picks up to `max` models preferring the desired ids, then filling with
@@ -24,4 +25,30 @@ export function mapAvailableModels(models: readonly any[]): ChatModelInfo[] {
     id: m.id ?? '',
     quality: (m.capabilities && (m.capabilities.quality as number | undefined)) ?? 0
   }));
+}
+
+export function resolveInitialModels({
+  stored,
+  desiredDefault,
+  available,
+  max = DEFAULT_MAX
+}: {
+  stored?: string[];
+  desiredDefault: string[];
+  available: ChatModelInfo[];
+  max?: number;
+}): string[] {
+  const availableSet = new Set(available.map(m => m.id));
+  const seen = new Set<string>();
+  const storedHits: string[] = [];
+  for (const id of stored ?? []) {
+    if (availableSet.has(id) && !seen.has(id)) {
+      storedHits.push(id);
+      seen.add(id);
+    }
+  }
+
+  if (storedHits.length > 0) return storedHits;
+
+  return pickDefaultModels(desiredDefault, available, max);
 }

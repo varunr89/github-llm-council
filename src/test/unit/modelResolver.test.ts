@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { pickDefaultModels } from '../../council/modelResolver';
+import { pickDefaultModels, resolveInitialModels } from '../../council/modelResolver';
 
 describe('pickDefaultModels', () => {
   const desired = ['gpt-5.1', 'sonnet-4.5', 'gemini-pro-3'];
@@ -18,5 +18,32 @@ describe('pickDefaultModels', () => {
   it('falls back when desired missing', () => {
     const result = pickDefaultModels(desired, [{ id: 'sonnet-4.5', quality: 0.9 }], 3);
     expect(result).toEqual(['sonnet-4.5']);
+  });
+});
+
+describe('resolveInitialModels', () => {
+  const desired = ['gpt-5.1', 'sonnet-4.5', 'gemini-pro-3'];
+  const available = [
+    { id: 'gpt-5.1', quality: 1 },
+    { id: 'sonnet-4.5', quality: 0.9 },
+    { id: 'gemini-pro-3', quality: 0.8 }
+  ];
+
+  it('prefers stored models when available', () => {
+    const result = resolveInitialModels({
+      stored: ['gemini-pro-3', 'gpt-5.1'],
+      desiredDefault: desired,
+      available
+    });
+    expect(result).toEqual(['gemini-pro-3', 'gpt-5.1']);
+  });
+
+  it('filters stored models not available and falls back to defaults', () => {
+    const result = resolveInitialModels({
+      stored: ['missing-1', 'missing-2'],
+      desiredDefault: desired,
+      available
+    });
+    expect(result).toEqual(['gpt-5.1', 'sonnet-4.5', 'gemini-pro-3']);
   });
 });
