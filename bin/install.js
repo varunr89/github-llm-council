@@ -20,9 +20,9 @@ function runCode(cmd, args) {
 
 function main() {
   if (!fs.existsSync(vsixPath)) {
-    console.error(`[llm-council] VSIX not found at ${vsixPath}.`);
-    console.error('[llm-council] Run `npm run package:vsix` before publishing.');
-    process.exit(1);
+    console.log(`[llm-council] VSIX not found at ${vsixPath}, skipping auto-install.`);
+    console.log('[llm-council] This is expected in dev; run `npm run package:vsix` before publishing.');
+    return;
   }
 
   const args = ['--install-extension', vsixPath, '--force'];
