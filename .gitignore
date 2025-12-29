@@ -4,5 +4,6 @@ out
 *.vsix
 *.log
 .DS_Store
-dist
+dist/*
+!dist/.gitkeep
 github-llm-council-0.0.1.tgz
