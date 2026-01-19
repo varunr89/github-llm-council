@@ -4,6 +4,9 @@
   "description": "Simple Copilot SDK webapp",
   "type": "module",
   "main": "index.js",
+  "bin": {
+    "github-llm-council": "./bin/cli.js"
+  },
   "scripts": {
     "build": "tsc",
     "dev": "tsx watch src/server.ts",
@@ -18,7 +21,8 @@
   "license": "ISC",
   "dependencies": {
     "@github/copilot-sdk": "^0.1.13",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "open": "^11.0.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
