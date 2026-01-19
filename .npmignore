@@ -1,0 +1,20 @@
+# Source files (we ship compiled)
+src/*.ts
+
+# Test files
+tests/
+vitest.config.ts
+playwright.config.ts
+coverage/
+
+# Dev files
+.git/
+.github/
+.vscode/
+docs/
+
+# Config files
+tsconfig.json
+.gitignore
+.eslintrc*
+.prettierrc*

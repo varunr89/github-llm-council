@@ -1,12 +1,17 @@
 {
-  "name": "copilot-webapp",
-  "version": "1.0.0",
-  "description": "Simple Copilot SDK webapp",
+  "name": "github-llm-council",
+  "version": "2.0.0",
+  "description": "Watch multiple AI models debate side-by-side using GitHub Copilot",
   "type": "module",
-  "main": "index.js",
+  "main": "dist/src/server.js",
   "bin": {
     "github-llm-council": "./bin/cli.js"
   },
+  "files": [
+    "dist",
+    "bin",
+    "src/public"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsx watch src/server.ts",
@@ -14,11 +19,32 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "test:all": "npm run test && npm run test:e2e"
+    "test:all": "npm run test && npm run test:e2e",
+    "prepublishOnly": "npm run build"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "github",
+    "copilot",
+    "llm",
+    "ai",
+    "gpt",
+    "claude",
+    "gemini",
+    "streaming"
+  ],
+  "author": "Varun Ramesh",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/varunr89/github-llm-council.git"
+  },
+  "bugs": {
+    "url": "https://github.com/varunr89/github-llm-council/issues"
+  },
+  "homepage": "https://github.com/varunr89/github-llm-council#readme",
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "@github/copilot-sdk": "^0.1.13",
     "express": "^5.2.1",
