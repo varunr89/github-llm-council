@@ -1,10 +1,22 @@
 import express from 'express';
 import path from 'node:path';
+import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { CopilotClient } from '@github/copilot-sdk';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Resolve public path - works both in dev (src/) and prod (dist/src/)
+function resolvePublicPath(): string {
+  // Check if sibling public folder exists (dev mode: src/public)
+  const siblingPublic = path.join(__dirname, 'public');
+  if (fs.existsSync(siblingPublic)) {
+    return siblingPublic;
+  }
+  // Fallback: assume we're in dist/src/, go up to find src/public
+  return path.join(__dirname, '..', '..', 'src', 'public');
+}
 
 // Available models from GitHub Copilot CLI
 const AVAILABLE_MODELS = [
@@ -37,7 +49,7 @@ export async function createApp() {
   }
 
   // Serve static files from public directory
-  const publicPath = path.join(__dirname, 'public');
+  const publicPath = resolvePublicPath();
   app.use(express.static(publicPath));
 
   app.get('/api/models', (_req, res) => {
