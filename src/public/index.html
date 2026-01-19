@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Copilot Webapp</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, sans-serif;
+        margin: 2rem;
+      }
+      textarea {
+        width: 100%;
+        min-height: 120px;
+      }
+      button {
+        margin-top: 0.5rem;
+      }
+      pre {
+        white-space: pre-wrap;
+        background: #f6f8fa;
+        padding: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Copilot SDK Webapp</h1>
+    <p>Enter a prompt and stream the response.</p>
+    <textarea id="prompt" placeholder="Ask something..."></textarea>
+    <br />
+    <button id="send">Send (stream)</button>
+    <button id="sendOnce">Send (single)</button>
+    <pre id="output"></pre>
+
+    <script>
+      const output = document.getElementById("output");
+      const promptEl = document.getElementById("prompt");
+      const sendBtn = document.getElementById("send");
+      const sendOnceBtn = document.getElementById("sendOnce");
+
+      function resetOutput() {
+        output.textContent = "";
+      }
+
+      sendOnceBtn.addEventListener("click", async () => {
+        resetOutput();
+        const prompt = promptEl.value.trim();
+        if (!prompt) return;
+
+        const response = await fetch("/api/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt })
+        });
+
+        const data = await response.json();
+        output.textContent = data.content || data.error || "";
+      });
+
+      sendBtn.addEventListener("click", async () => {
+        resetOutput();
+        const prompt = promptEl.value.trim();
+        if (!prompt) return;
+
+        const response = await fetch("/api/stream", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ prompt })
+        });
+
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = "";
+
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          const parts = buffer.split("\n\n");
+          buffer = parts.pop() || "";
+
+          for (const part of parts) {
+            if (part.startsWith("event: done")) {
+              return;
+            }
+            if (part.startsWith("data: ")) {
+              const payload = JSON.parse(part.replace("data: ", ""));
+              if (payload.delta) {
+                output.textContent += payload.delta;
+              } else if (payload.content) {
+                output.textContent = payload.content;
+              }
+            }
+          }
+        }
+      });
+    </script>
+  </body>
+</html>
