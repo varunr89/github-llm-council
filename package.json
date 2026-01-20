@@ -1,6 +1,6 @@
 {
   "name": "github-llm-council",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "Watch multiple AI models debate side-by-side using GitHub Copilot",
   "type": "module",
   "main": "dist/src/server.js",

@@ -10,51 +10,32 @@ const __dirname = path.dirname(__filename);
 // Check for GitHub Copilot CLI before starting
 function checkCopilotCLI() {
   try {
-    execSync('gh copilot --version', { stdio: 'pipe' });
+    execSync('copilot --version', { stdio: 'pipe' });
     return true;
   } catch {
     return false;
   }
-}
-
-function checkGitHubCLI() {
-  try {
-    execSync('gh --version', { stdio: 'pipe' });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-if (!checkGitHubCLI()) {
-  console.error(`
-╔════════════════════════════════════════════════════════════════════╗
-║  ERROR: GitHub CLI (gh) is not installed                           ║
-╠════════════════════════════════════════════════════════════════════╣
-║  This tool requires the GitHub CLI to access Copilot models.       ║
-║                                                                    ║
-║  Install it from: https://cli.github.com/                          ║
-║                                                                    ║
-║  After installing, authenticate with:                              ║
-║    gh auth login                                                   ║
-╚════════════════════════════════════════════════════════════════════╝
-`);
-  process.exit(1);
 }
 
 if (!checkCopilotCLI()) {
   console.error(`
-╔════════════════════════════════════════════════════════════════════╗
-║  ERROR: GitHub Copilot CLI extension is not installed              ║
-╠════════════════════════════════════════════════════════════════════╣
-║  This tool requires the Copilot extension for the GitHub CLI.      ║
-║                                                                    ║
-║  Install it with:                                                  ║
-║    gh extension install github/gh-copilot                          ║
-║                                                                    ║
-║  You also need an active GitHub Copilot subscription.              ║
-║  Learn more: https://github.com/features/copilot                   ║
-╚════════════════════════════════════════════════════════════════════╝
+╔══════════════════════════════════════════════════════════════════════╗
+║  ERROR: GitHub Copilot CLI is not installed                          ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  This tool requires the GitHub Copilot CLI to access Copilot models. ║
+║                                                                      ║
+║  Install with npm:                                                   ║
+║    npm install -g @github/copilot                                    ║
+║                                                                      ║
+║  Or with Homebrew (macOS/Linux):                                     ║
+║    brew install copilot-cli                                          ║
+║                                                                      ║
+║  Or with WinGet (Windows):                                           ║
+║    winget install GitHub.Copilot                                     ║
+║                                                                      ║
+║  You also need an active GitHub Copilot subscription.                ║
+║  Learn more: https://github.com/github/copilot-cli                   ║
+╚══════════════════════════════════════════════════════════════════════╝
 `);
   process.exit(1);
 }
