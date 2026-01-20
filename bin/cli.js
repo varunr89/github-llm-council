@@ -2,15 +2,33 @@
 
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { createRequire } from 'node:module';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Create require from package root (not bin/) for better dependency resolution
-const packageRoot = path.join(__dirname, '..');
-const require = createRequire(path.join(packageRoot, 'package.json'));
+// Find @github/copilot by walking up the filesystem from our package location
+// This bypasses Node.js exports restrictions that block require.resolve()
+function findCopilotCliPath(startDir) {
+  let dir = startDir;
+  const root = path.parse(dir).root;
+  
+  while (dir !== root) {
+    // Check node_modules/@github/copilot/npm-loader.js
+    const copilotPath = path.join(dir, 'node_modules', '@github', 'copilot', 'npm-loader.js');
+    if (existsSync(copilotPath)) {
+      return copilotPath;
+    }
+    // Also check sibling in node_modules (for hoisted packages in npx cache)
+    const siblingPath = path.join(dir, '@github', 'copilot', 'npm-loader.js');
+    if (existsSync(siblingPath)) {
+      return siblingPath;
+    }
+    dir = path.dirname(dir);
+  }
+  return null;
+}
 
 // Resolve the @github/copilot CLI loader path
 // Returns null if not found
@@ -18,13 +36,9 @@ function resolveCopilotCliPath() {
   if (process.env.COPILOT_MOCK === '1') {
     return null; // Mock mode doesn't need the CLI
   }
-  try {
-    const copilotPkgPath = require.resolve('@github/copilot/package.json');
-    const copilotDir = path.dirname(copilotPkgPath);
-    return path.join(copilotDir, 'npm-loader.js');
-  } catch {
-    return null;
-  }
+  // Start from our package root (parent of bin/)
+  const packageRoot = path.join(__dirname, '..');
+  return findCopilotCliPath(packageRoot);
 }
 
 const copilotCliPath = resolveCopilotCliPath();
