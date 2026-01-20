@@ -10,12 +10,15 @@ const __dirname = path.dirname(__filename);
 // Check for GitHub Copilot CLI before starting (cross-platform)
 function checkCopilotCLI() {
   try {
-    // Use 'where' on Windows, 'which' on Unix
-    const isWindows = process.platform === 'win32';
-    const checkCmd = isWindows ? 'where copilot' : 'which copilot';
-    execSync(checkCmd, { stdio: 'pipe' });
+    // Try to run copilot with a quick command
+    // Use shell: true on Windows to ensure proper command resolution
+    execSync('copilot --help', { 
+      stdio: 'pipe', 
+      shell: true,
+      timeout: 5000 
+    });
     return true;
-  } catch {
+  } catch (err) {
     return false;
   }
 }
