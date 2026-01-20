@@ -7,10 +7,13 @@ import path from 'node:path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Check for GitHub Copilot CLI before starting
+// Check for GitHub Copilot CLI before starting (cross-platform)
 function checkCopilotCLI() {
   try {
-    execSync('copilot --version', { stdio: 'pipe' });
+    // Use 'where' on Windows, 'which' on Unix
+    const isWindows = process.platform === 'win32';
+    const checkCmd = isWindows ? 'where copilot' : 'which copilot';
+    execSync(checkCmd, { stdio: 'pipe' });
     return true;
   } catch {
     return false;
