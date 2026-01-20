@@ -1,46 +1,41 @@
 #!/usr/bin/env node
 
-import { spawn, execSync } from 'node:child_process';
+import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
 import path from 'node:path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Check for GitHub Copilot CLI before starting (cross-platform)
-function checkCopilotCLI() {
-  try {
-    // Try to run copilot with a quick command
-    // Use shell: true on Windows to ensure proper command resolution
-    execSync('copilot --help', { 
-      stdio: 'pipe', 
-      shell: true,
-      timeout: 5000 
-    });
+// Check that @github/copilot is available (bundled dependency)
+// Skip check in mock mode (for testing)
+function checkCopilotPackage() {
+  if (process.env.COPILOT_MOCK === '1') {
     return true;
-  } catch (err) {
+  }
+  try {
+    const require = createRequire(import.meta.url);
+    require.resolve('@github/copilot/package.json');
+    return true;
+  } catch {
     return false;
   }
 }
 
-if (!checkCopilotCLI()) {
+if (!checkCopilotPackage()) {
   console.error(`
 ╔══════════════════════════════════════════════════════════════════════╗
-║  ERROR: GitHub Copilot CLI is not installed                          ║
+║  ERROR: @github/copilot package not found                            ║
 ╠══════════════════════════════════════════════════════════════════════╣
-║  This tool requires the GitHub Copilot CLI to access Copilot models. ║
+║  The Copilot CLI dependency could not be resolved.                   ║
 ║                                                                      ║
-║  Install with npm:                                                   ║
-║    npm install -g @github/copilot                                    ║
+║  This is likely a packaging error. Please try:                       ║
+║    npm cache clean --force                                           ║
+║    npx github-llm-council@latest                                     ║
 ║                                                                      ║
-║  Or with Homebrew (macOS/Linux):                                     ║
-║    brew install copilot-cli                                          ║
-║                                                                      ║
-║  Or with WinGet (Windows):                                           ║
-║    winget install GitHub.Copilot                                     ║
-║                                                                      ║
-║  You also need an active GitHub Copilot subscription.                ║
-║  Learn more: https://github.com/github/copilot-cli                   ║
+║  Or report the issue at:                                             ║
+║    https://github.com/varunr89/github-llm-council/issues             ║
 ╚══════════════════════════════════════════════════════════════════════╝
 `);
   process.exit(1);

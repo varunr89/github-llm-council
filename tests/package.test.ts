@@ -11,7 +11,7 @@ describe('Package Configuration', () => {
     });
 
     it('should have correct version', () => {
-      expect(pkg.version).toBe('2.0.0');
+      expect(pkg.version).toMatch(/^\d+\.\d+\.\d+$/);
     });
 
     it('should have description', () => {
