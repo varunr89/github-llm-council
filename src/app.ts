@@ -20,20 +20,30 @@ function resolvePublicPath(): string {
 
 // Available models from GitHub Copilot CLI
 const AVAILABLE_MODELS = [
+  // GPT Models
   { id: 'gpt-5.2', name: 'GPT-5.2' },
-  { id: 'gpt-5.1', name: 'GPT-5.1' },
-  { id: 'gpt-5', name: 'GPT-5' },
-  { id: 'gpt-5-mini', name: 'GPT-5 Mini' },
   { id: 'gpt-5.2-codex', name: 'GPT-5.2 Codex' },
+  { id: 'gpt-5.1', name: 'GPT-5.1' },
   { id: 'gpt-5.1-codex', name: 'GPT-5.1 Codex' },
   { id: 'gpt-5.1-codex-max', name: 'GPT-5.1 Codex Max' },
-  { id: 'gpt-5.1-codex-mini', name: 'GPT-5.1 Codex Mini' },
+  { id: 'gpt-5.1-codex-mini', name: 'GPT-5.1 Codex Mini (Preview)' },
+  { id: 'gpt-5', name: 'GPT-5' },
+  { id: 'gpt-5-mini', name: 'GPT-5 Mini' },
+  { id: 'gpt-5-codex', name: 'GPT-5 Codex (Preview)' },
   { id: 'gpt-4.1', name: 'GPT-4.1' },
+  { id: 'gpt-4o', name: 'GPT-4o' },
+  // Claude Models
   { id: 'claude-opus-4.5', name: 'Claude Opus 4.5' },
+  { id: 'claude-opus-4.1', name: 'Claude Opus 4.1' },
   { id: 'claude-sonnet-4.5', name: 'Claude Sonnet 4.5' },
   { id: 'claude-sonnet-4', name: 'Claude Sonnet 4' },
   { id: 'claude-haiku-4.5', name: 'Claude Haiku 4.5' },
-  { id: 'gemini-3-pro-preview', name: 'Gemini 3 Pro' },
+  // Gemini Models
+  { id: 'gemini-3-pro-preview', name: 'Gemini 3 Pro (Preview)' },
+  { id: 'gemini-3-flash-preview', name: 'Gemini 3 Flash (Preview)' },
+  { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro' },
+  // Internal
+  { id: 'goldeneye', name: 'Goldeneye (Internal Only)' },
 ];
 
 export async function createApp() {
