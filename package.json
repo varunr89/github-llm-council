@@ -1,6 +1,6 @@
 {
   "name": "github-llm-council",
-  "version": "2.0.8",
+  "version": "2.0.9",
   "description": "Watch multiple AI models debate side-by-side using GitHub Copilot",
   "type": "module",
   "main": "dist/src/server.js",
@@ -49,7 +49,8 @@
     "@github/copilot": "^0.0.384",
     "@github/copilot-sdk": "^0.1.13",
     "express": "^5.2.1",
-    "open": "^11.0.0"
+    "open": "^11.0.0",
+    "resolve": "^1.22.11"
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
