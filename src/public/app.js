@@ -2,12 +2,51 @@ const promptInput = document.getElementById('prompt-input');
 const submitBtn = document.getElementById('submit-btn');
 const chips = document.querySelectorAll('.chip');
 const columns = document.querySelectorAll('.council-column');
+const modelSelects = document.querySelectorAll('.model-select');
 
-const columnMap = {
-  'gpt-5': document.querySelector('[data-model="gpt-5"]'),
-  'claude-sonnet': document.querySelector('[data-model="claude-sonnet"]'),
-  'gemini-pro': document.querySelector('[data-model="gemini-pro"]'),
-};
+let availableModels = [];
+
+// Fetch and populate available models
+async function loadModels() {
+  try {
+    const response = await fetch('/api/models');
+    const data = await response.json();
+    availableModels = data.models || [];
+
+    modelSelects.forEach((select, index) => {
+      select.textContent = '';
+      availableModels.forEach((model, modelIndex) => {
+        const option = document.createElement('option');
+        option.value = model.id || model;
+        option.textContent = model.name || model.id || model;
+        // Select different models by default for each column
+        if (modelIndex === index % availableModels.length) {
+          option.selected = true;
+        }
+        select.appendChild(option);
+      });
+    });
+
+    console.log('Loaded models:', availableModels);
+  } catch (error) {
+    console.error('Failed to load models:', error);
+    modelSelects.forEach(select => {
+      select.textContent = '';
+      const option = document.createElement('option');
+      option.value = '';
+      option.textContent = 'Failed to load models';
+      select.appendChild(option);
+    });
+  }
+}
+
+function getSelectedModels() {
+  return Array.from(modelSelects).map(select => select.value).filter(v => v);
+}
+
+function getColumnByIndex(index) {
+  return document.querySelector(`[data-index="${index}"]`);
+}
 
 function resetColumns() {
   columns.forEach(col => {
@@ -24,7 +63,6 @@ function appendCharWithAnimation(column, char) {
   span.textContent = char;
   responseText.appendChild(span);
 
-  // Auto-scroll to bottom
   const content = column.querySelector('.column-content');
   content.scrollTop = content.scrollHeight;
 }
@@ -48,16 +86,25 @@ async function submitPrompt() {
   const prompt = promptInput.value.trim();
   if (!prompt) return;
 
+  const models = getSelectedModels();
+  if (models.length === 0) {
+    alert('Please select at least one model');
+    return;
+  }
+
   resetColumns();
   submitBtn.classList.add('loading');
   submitBtn.disabled = true;
   columns.forEach(col => col.classList.add('active'));
 
+  // Track completion per column index
+  const completedColumns = new Set();
+
   try {
     const response = await fetch('/api/council', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt }),
+      body: JSON.stringify({ prompt, models }),
     });
 
     if (!response.ok) {
@@ -67,6 +114,19 @@ async function submitPrompt() {
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
+
+    // Map model ID to column index (models array order matches column order)
+    const modelToIndex = {};
+    models.forEach((model, idx) => {
+      // If same model selected multiple times, we need to track per occurrence
+      if (!modelToIndex[model]) {
+        modelToIndex[model] = [];
+      }
+      modelToIndex[model].push(idx);
+    });
+
+    // Track how many "done" events we've seen per model
+    const modelDoneCount = {};
 
     while (true) {
       const { value, done } = await reader.read();
@@ -94,7 +154,16 @@ async function submitPrompt() {
               return;
             }
 
-            const column = columnMap[payload.model];
+            const modelId = payload.model;
+            const indices = modelToIndex[modelId];
+            if (!indices || indices.length === 0) continue;
+
+            // For models selected multiple times, round-robin the done events
+            if (!modelDoneCount[modelId]) modelDoneCount[modelId] = 0;
+
+            // Get the next column index for this model
+            const targetIdx = indices[modelDoneCount[modelId] % indices.length];
+            const column = getColumnByIndex(targetIdx);
             if (!column) continue;
 
             if (payload.delta) {
@@ -104,6 +173,8 @@ async function submitPrompt() {
             if (payload.done) {
               column.classList.remove('active');
               column.classList.add('done');
+              completedColumns.add(targetIdx);
+              modelDoneCount[modelId]++;
             }
           } catch (e) {
             console.error('Parse error:', e);
@@ -143,11 +214,5 @@ chips.forEach(function(chip) {
   });
 });
 
-// Add flash class support to input
-promptInput.addEventListener('focus', function() {
-  promptInput.classList.add('focused');
-});
-
-promptInput.addEventListener('blur', function() {
-  promptInput.classList.remove('focused');
-});
+// Load models on page load
+loadModels();

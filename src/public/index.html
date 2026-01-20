@@ -37,10 +37,12 @@
     </div>
 
     <div class="council-grid">
-      <div class="council-column" data-model="gpt-5">
+      <div class="council-column" data-index="0">
         <div class="column-header">
           <span class="model-indicator"></span>
-          <span class="model-name">GPT-5</span>
+          <select class="model-select" data-index="0">
+            <option value="">Loading models...</option>
+          </select>
         </div>
         <div class="column-content">
           <div class="response-text"></div>
@@ -48,10 +50,12 @@
         </div>
       </div>
 
-      <div class="council-column" data-model="claude-sonnet">
+      <div class="council-column" data-index="1">
         <div class="column-header">
           <span class="model-indicator"></span>
-          <span class="model-name">CLAUDE</span>
+          <select class="model-select" data-index="1">
+            <option value="">Loading models...</option>
+          </select>
         </div>
         <div class="column-content">
           <div class="response-text"></div>
@@ -59,10 +63,12 @@
         </div>
       </div>
 
-      <div class="council-column" data-model="gemini-pro">
+      <div class="council-column" data-index="2">
         <div class="column-header">
           <span class="model-indicator"></span>
-          <span class="model-name">GEMINI</span>
+          <select class="model-select" data-index="2">
+            <option value="">Loading models...</option>
+          </select>
         </div>
         <div class="column-content">
           <div class="response-text"></div>

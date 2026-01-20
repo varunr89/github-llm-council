@@ -168,15 +168,16 @@ body {
   transition: all 0.3s;
 }
 
-.council-column[data-model="gpt-5"] {
+/* Color by column index */
+.council-column[data-index="0"] {
   --model-color: var(--gpt-color);
 }
 
-.council-column[data-model="claude-sonnet"] {
+.council-column[data-index="1"] {
   --model-color: var(--claude-color);
 }
 
-.council-column[data-model="gemini-pro"] {
+.council-column[data-index="2"] {
   --model-color: var(--gemini-color);
 }
 
@@ -223,6 +224,36 @@ body {
   font-weight: 700;
   letter-spacing: 0.05em;
   color: var(--model-color);
+}
+
+.model-select {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--model-color);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s;
+  min-width: 140px;
+}
+
+.model-select:hover {
+  border-color: var(--model-color);
+}
+
+.model-select:focus {
+  border-color: var(--model-color);
+  box-shadow: 0 0 8px var(--model-color);
+}
+
+.model-select option {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
 }
 
 .column-content {
