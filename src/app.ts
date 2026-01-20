@@ -2,7 +2,6 @@ import express from 'express';
 import path from 'node:path';
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { createRequire } from 'node:module';
 import { CopilotClient } from '@github/copilot-sdk';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -17,16 +16,6 @@ function resolvePublicPath(): string {
   }
   // Fallback: assume we're in dist/src/, go up to find src/public
   return path.join(__dirname, '..', '..', 'src', 'public');
-}
-
-// Resolve the bundled @github/copilot CLI loader path
-// This bypasses the Windows cmd /c "copilot" quoting issue in @github/copilot-sdk
-function resolveCopilotCliPath(): string {
-  const require = createRequire(import.meta.url);
-  // Resolve the npm-loader.js from @github/copilot package
-  const copilotPkgPath = require.resolve('@github/copilot/package.json');
-  const copilotDir = path.dirname(copilotPkgPath);
-  return path.join(copilotDir, 'npm-loader.js');
 }
 
 // Available models from GitHub Copilot CLI
@@ -67,9 +56,10 @@ export async function createApp() {
   
   let client: CopilotClient | null = null;
   if (!useMock) {
-    // Use the bundled @github/copilot CLI loader to avoid Windows PATH issues
-    const cliPath = resolveCopilotCliPath();
-    client = new CopilotClient({ cliPath });
+    // Use the CLI path passed from bin/cli.js via environment variable
+    // This bypasses the Windows cmd /c "copilot" quoting issue in @github/copilot-sdk
+    const cliPath = process.env.COPILOT_CLI_PATH;
+    client = cliPath ? new CopilotClient({ cliPath }) : new CopilotClient();
     await client.start();
   }
 

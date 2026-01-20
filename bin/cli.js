@@ -8,22 +8,28 @@ import path from 'node:path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Check that @github/copilot is available (bundled dependency)
-// Skip check in mock mode (for testing)
-function checkCopilotPackage() {
+// Create require from package root (not bin/) for better dependency resolution
+const packageRoot = path.join(__dirname, '..');
+const require = createRequire(path.join(packageRoot, 'package.json'));
+
+// Resolve the @github/copilot CLI loader path
+// Returns null if not found
+function resolveCopilotCliPath() {
   if (process.env.COPILOT_MOCK === '1') {
-    return true;
+    return null; // Mock mode doesn't need the CLI
   }
   try {
-    const require = createRequire(import.meta.url);
-    require.resolve('@github/copilot/package.json');
-    return true;
+    const copilotPkgPath = require.resolve('@github/copilot/package.json');
+    const copilotDir = path.dirname(copilotPkgPath);
+    return path.join(copilotDir, 'npm-loader.js');
   } catch {
-    return false;
+    return null;
   }
 }
 
-if (!checkCopilotPackage()) {
+const copilotCliPath = resolveCopilotCliPath();
+
+if (!copilotCliPath && process.env.COPILOT_MOCK !== '1') {
   console.error(`
 ╔══════════════════════════════════════════════════════════════════════╗
 ║  ERROR: @github/copilot package not found                            ║
@@ -49,8 +55,14 @@ const serverPath = path.join(__dirname, '..', 'dist', 'src', 'server.js');
 
 console.log(`Starting LLM Council on port ${port}...`);
 
+// Pass the resolved CLI path to the server via environment variable
+const serverEnv = { ...process.env, PORT: port };
+if (copilotCliPath) {
+  serverEnv.COPILOT_CLI_PATH = copilotCliPath;
+}
+
 const server = spawn('node', [serverPath], {
-  env: { ...process.env, PORT: port },
+  env: serverEnv,
   stdio: 'inherit',
 });
 
