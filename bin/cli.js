@@ -43,33 +43,42 @@ if (!copilotCliPath && process.env.COPILOT_MOCK !== '1') {
   process.exit(1);
 }
 
-const port = process.env.PORT || '3000';
+const preferredPort = process.env.PORT || '3000';
 const noOpen = process.argv.includes('--no-open');
 
 // Path to compiled server
 const serverPath = path.join(__dirname, '..', 'dist', 'src', 'server.js');
 
-console.log(`Starting LLM Council on port ${port}...`);
+console.log(`Starting LLM Council...`);
 
 // Pass the resolved CLI path to the server via environment variable
-const serverEnv = { ...process.env, PORT: port };
+const serverEnv = { ...process.env, PORT: preferredPort };
 if (copilotCliPath) {
   serverEnv.COPILOT_CLI_PATH = copilotCliPath;
 }
 
 const server = spawn('node', [serverPath], {
   env: serverEnv,
-  stdio: 'inherit',
+  stdio: ['inherit', 'pipe', 'inherit'],
 });
 
-if (!noOpen) {
-  const open = await import('open');
-  setTimeout(() => {
-    const url = `http://localhost:${port}`;
+let browserOpened = false;
+
+// Parse server output to find actual port and open browser
+server.stdout.on('data', async (data) => {
+  const output = data.toString();
+  process.stdout.write(output);
+  
+  // Look for "LLM Council running at http://localhost:PORT"
+  const match = output.match(/LLM Council running at (http:\/\/localhost:\d+)/);
+  if (match && !browserOpened && !noOpen) {
+    browserOpened = true;
+    const url = match[1];
+    const open = await import('open');
     console.log(`Opening ${url} in browser...`);
     open.default(url);
-  }, 2000);
-}
+  }
+});
 
 process.on('SIGINT', () => {
   server.kill('SIGINT');
